@@ -27,7 +27,7 @@ spec.parzen<-function(x,a=100,dt=1,w0=10^(-5),wn=1/(2*dt),nn=512)
   tt<-seq(-1,1,length=2*a-1)
   kp[abs(tt)<.5]<-1-6*abs(tt[abs(tt)<.5])^2+6*(abs(tt[abs(tt)<.5])^3)
   kp[abs(tt)>=.5]<-2*(1-abs(tt[abs(tt)>=.5]))^3
-  Cov<-as.vector(acf(x, lag.max=a-1,type = "covariance",plot=F)$acf)
+  Cov<-as.vector(acf(x, lag.max=a-1,type = "covariance",plot=F,na.action = na.exclude)$acf)
   CovS<-kp[a:(2*a-1)]*Cov
   time<-seq(0,length(x)*dt,by=dt)[1:a]
   S<-function(ww)return((2*dt/pi)*sum(cos(2*pi*ww*time)[-1]*CovS[-1])+(dt/pi)*CovS[1])
@@ -40,7 +40,7 @@ spec.parzen<-function(x,a=100,dt=1,w0=10^(-5),wn=1/(2*dt),nn=512)
 
 Spectral.matrix<-function(X,Fs,op=1,bw=20)
 {
-  #Computes the spectral matrix using fft and a smoothing is done by the ferej kernel  
+  #Computes the spectral matrix using fft and a smoothing is done by the ferej kernel
   Xfft<-mvfft(X)
   N<-nrow(X)
   if(op==1){
@@ -62,7 +62,7 @@ Spectral.matrix<-function(X,Fs,op=1,bw=20)
         SS[, i, j] <- Xfft[, i] * Conj(Xfft[, j])/(N*Fs)
         SS[1, i, j] <- 0.5 * (SS[2, i, j] + SS[N, i, j])
       }
-    } 
+    }
   }
   SS<-SS[1:(N/2),,]
   w<-seq(0,(Fs/2),length=N/2)
@@ -99,7 +99,7 @@ HSM<-function(X,S=NULL,w=NULL,freq=1,Merger=1,par.spectrum=c(100,1/(2*dt),512),p
       }
       Aux_Spec<-spec.parzen(X[,k],a=a,dt=dt,wn=wn,nn=length.w)
       Spec<-cbind(Spec,Aux_Spec[,2]/((w[2:length.w]-w[1:(length.w-1)])%*%(Aux_Spec[2:length.w,2]+Aux_Spec[1:(length.w-1),2])/2))
-      
+
     }else{
       Spec<-matrix(NA,nrow=length.w,ncol=k)
       for(i in 1:k){
@@ -208,7 +208,7 @@ HSM<-function(X,S=NULL,w=NULL,freq=1,Merger=1,par.spectrum=c(100,1/(2*dt),512),p
       MD_Change<-rbind(MD_Change,aux2)
       MD_Change<-cbind(MD_Change,c(aux2,Inf))# new MD
       }else{MD_Change<-0}
-      
+
     }
   }
   out <- list(MatDiss,min.value, groups)
@@ -226,28 +226,28 @@ HCC<-function(X,Clustfreq=NULL,freq=1,dist=1){
   #Initial estimated Spectra and Dissimilarity Matrix
   SSlist<-Spectral.matrix(X,freq)
   w<-SSlist$freq;SS<-SSlist$f
-  Coh.Mat<- array(NA,dim=c(n/2,k,k))  
+  Coh.Mat<- array(NA,dim=c(n/2,k,k))
   for(i in 1:k)for(j in i:k) {
     Coh.Mat[,i,j]<-Re((Re(SS[,i,j])^2+Im(SS[,i,j])^2)/((SS[,i,i])*(SS[,j,j])))
-  } 
-  out<-list(w,SS,Coh.Mat) #If user does not choose a frequency band then it returns SS and coherence matrix 
+  }
+  out<-list(w,SS,Coh.Mat) #If user does not choose a frequency band then it returns SS and coherence matrix
   basic.names<-c("w","Spectral.Matrix","Coherence")
   names(out) <- basic.names
   if(is.null(Clustfreq)==FALSE){
     ind.band<-findInterval(Clustfreq,w)#
-    MatDiss<- Coh.Mat[ind.band[1]:ind.band[length(ind.band)],,] 
+    MatDiss<- Coh.Mat[ind.band[1]:ind.band[length(ind.band)],,]
     #Integrate Coherence in case of band freq
     if(length(ind.band)>1){
       MatDissAux<-matrix(0,nrow=k,ncol=k)
       for(bandcoh in 1:length(ind.band))MatDissAux<-MatDissAux+as.matrix(MatDiss[bandcoh,,])
       MatDiss<-MatDissAux/(length(ind.band)) #(wn-w0)/n partiton size / (wn-w0) normalization constant
-    }    
+    }
     MatDiss[lower.tri(MatDiss)]<-t(MatDiss)[lower.tri(MatDiss)]
     # Dinamic Diss Mat
     MD_Change<-1-MatDiss# initial MD #
     diag(MD_Change)<-rep(Inf,k)
     # initial groups
-    g<-as.list(1:k)  
+    g<-as.list(1:k)
     eigen.values<-as.list(rep(1,k))
     #Save variables
     min.value<-numeric(k-1)
@@ -256,16 +256,16 @@ HCC<-function(X,Clustfreq=NULL,freq=1,dist=1){
     #Clustering using coherence
     for(ite in 1:(k-1)){
       #############
-      # Identify the closest clusters and the maximun value (highest coherence) 
-      min.value[ite]<-min(MD_Change) ##  
+      # Identify the closest clusters and the maximun value (highest coherence)
+      min.value[ite]<-min(MD_Change) ##
       aux1<-which(MD_Change==min(MD_Change),arr.ind = TRUE)[1,]
       eigen.values<-c(eigen.values[-aux1],list(eigen(MatDiss[unlist(g[aux1]),unlist(g[aux1])])$values)) #new eigen values
       g<-c(g[-aux1],list(unlist(g[aux1])))# new groups
-      groups[[ite]]<-g ## 
+      groups[[ite]]<-g ##
       groups.eigen.values[[ite]]<-eigen.values ##
       #############
       #Compute new dissimilarity using eigenvalues
-      MD_Change<-MD_Change[-aux1,-aux1] 
+      MD_Change<-MD_Change[-aux1,-aux1]
       aux2<-numeric(k-ite-1)
       if(ite<(k-1)){
         for(i in 1:(k-ite-1)){
@@ -279,7 +279,7 @@ HCC<-function(X,Clustfreq=NULL,freq=1,dist=1){
         MD_Change<-cbind(MD_Change,c(aux2,Inf))# new MD
       }
     }
-    out <- list(1-MatDiss, min.value, groups, groups.eigen.values) 
+    out <- list(1-MatDiss, min.value, groups, groups.eigen.values)
     names(out) <- c("Diss.Matrix","min.value", "Groups","Lambda.Groups")
   }
   out
@@ -377,15 +377,15 @@ normalize<-function(x,fx,normfx=FALSE,D=1,y=NULL)
   }
   if(normfx){
     return(inte)
-  }else{ 
-    if(inte==0){ 
+  }else{
+    if(inte==0){
       return(fx)
     }else{
       return(fx/inte)}
   }
 }
 
-##Clustering Visualization 
+##Clustering Visualization
 #Need the ColPal
 VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL){
   colPal<-c("#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059",
@@ -640,7 +640,7 @@ boot.clus<-function(X,Clust,kg0,alpha=c(.01,.05,.1),nboot=1000,parallel=FALSE,fr
     nor<-((w[2:length(w)]-w[1:(length(w)-1)])%*%(g[2:length(w)]+g[1:(length(w)-1)])/2)
     return(g/nor)
   }
-  
+
   if(parallel==TRUE){
     library("doParallel")
     cl<-detectCores()-1
