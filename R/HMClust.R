@@ -1,4 +1,4 @@
-## Distance functions
+ ## Distance functions
 TVD<-function(w,f1,f2){
   #Compute TV distance using the trapezoidal rule
   if(length(w)!=length(f1)|length(w)!=length(f2))stop("w, f1 and f2 must have the same length")
@@ -345,6 +345,59 @@ HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE){
   out
 }
 
+HM2D<-function (x,y, fxy, parallel = FALSE, normalize = TRUE){
+  k <- length(fxy)
+  if (normalize)
+    fxyN <- lapply(fxy,normalize, x = x, y = y, D=2)
+  else fxyN <- fxy
+  if (parallel) {
+    library("doParallel")
+    cl <- min(k, detectCores() - 1)
+    registerDoParallel(cl)
+    MatDiss <- foreach(i = 1:k, .combine = rbind) %dopar%
+    {
+      Aux.MatDiss <- rep(NA, k)
+      for (j in i:k) Aux.MatDiss[j] <- TVD2(x, y, fxyN[[i]],fxyN[[j]])
+      Aux.MatDiss
+    }
+  }
+  else {
+    MatDiss <- matrix(NA, k, k)
+    for (i in 1:k) for (j in i:k) MatDiss[i, j] <- TVD2(x, y, fxyN[[i]],fxyN[[j]])
+  }
+  diag(MatDiss) <- 0
+  MatDiss[lower.tri(MatDiss)] <- t(MatDiss)[lower.tri(MatDiss)]
+  MD_Change <- MatDiss
+  diag(MD_Change) <- rep(Inf, k)
+  fxy_Change <- fxyN
+  g <- as.list(1:k)
+  min.value <- numeric(k - 1)
+  groups <- list()
+  for (ite in 1:(k - 1)) {
+    min.value[ite] <- min(MD_Change)
+    aux1 <- which(MD_Change == min(MD_Change), arr.ind = TRUE)[1,                                              ]
+    g <- c(g[-aux1], list(unlist(g[aux1])))
+    groups[[ite]] <- g
+    fxy_Change <- fxy_Change[-aux1]
+    fxy_Change[[length(fxy_Change)+1]] <- Reduce("+", fxyN[g[[k - ite]]]) / length(g[[k - ite]])
+    MD_Change <- MD_Change[-aux1, -aux1]
+    if (ite < (k - 1)) {
+      aux2 <- numeric(k - ite - 1)
+      for (i in 1:(k - ite - 1)) {
+        aux2[i] <- TVD2(x, y, fxy_Change[[i]],fxy_Change[[k-ite]])
+      }
+      MD_Change <- rbind(MD_Change, aux2)
+      MD_Change <- cbind(MD_Change, c(aux2, Inf))
+    }
+    else {
+      MD_Change <- 0
+    }
+  }
+  out <- list(MatDiss, min.value, groups)
+  names(out) <- c("Diss.Matrix", "min.value", "Groups")
+  out
+}
+
 ##Auxiliar functions
 Sim.Ar<-function(Time,eta,M,Fs=1,m_burn=100)
 {
@@ -383,6 +436,18 @@ normalize<-function(x,fx,normfx=FALSE,D=1,y=NULL)
     }else{
       return(fx/inte)}
   }
+}
+
+TVD2<-function(ww,theta,fxy1,fxy2){
+  length.w<-length(ww)
+  We<-matrix(4,nrow=length.w,ncol=37)
+  We[c(1,1,length.w,length.w),c(1,37,1,37)]<-1
+  We[2:(length.w-1),1]<-2
+  We[2:(length.w-1),37]<-2
+  We[1,2:36]<-2
+  We[length.w,2:36]<-2
+  # (1/2)*\int(|fxy1-fxy2|)
+  return((1/2)*sum(We*abs(fxy1-fxy2))*(1/4)*(ww[2]-ww[1])*(theta[2]-theta[1]))
 }
 
 ##Clustering Visualization
