@@ -615,7 +615,7 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
     par(mar=c(1,5,5,2))
     #(max(Clust$Diss.Matrix)-min(Clust$Diss.Matrix))
     plot(1:length(Clust$Groups),rev(Clust$min.value),type = "p",
-         axes=FALSE, main = "Dissimilarity",ylim = c(0,max(1,Clust$min.value)),
+         axes=FALSE, main = "Minimum dissimilarity",ylim = c(0,max(1,Clust$min.value)),
          pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],xlab="",ylab=" ")
     segments(1:(length(Clust$Groups)-1),rev(Clust$min.value[-1]),
              x1=2:length(Clust$Groups), y1=rev(Clust$min.value)[-1],
@@ -628,7 +628,7 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
       layout(matrix(c(1)))
       par(mar=c(5,5,5,2))
       plot(1:length(Clust$Groups),rev(Clust$min.value),type = "p",
-           axes=FALSE, main = "Dissimilarity",ylim = c(0,max(1,Clust$min.value)),
+           axes=FALSE, main = "Minimum dissimilarity",ylim = c(0,max(1,Clust$min.value)),
            pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],xlab="Number of Clusters",ylab=" ")
       segments(1:(length(Clust$Groups)-1),rev(Clust$min.value[-1]),
                x1=2:length(Clust$Groups), y1=rev(Clust$min.value)[-1],
