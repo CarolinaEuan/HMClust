@@ -438,16 +438,16 @@ normalize<-function(x,fx,normfx=FALSE,D=1,y=NULL)
   }
 }
 
-TVD2<-function(ww,theta,fxy1,fxy2){
-  length.w<-length(ww)
-  We<-matrix(4,nrow=length.w,ncol=37)
-  We[c(1,1,length.w,length.w),c(1,37,1,37)]<-1
-  We[2:(length.w-1),1]<-2
-  We[2:(length.w-1),37]<-2
-  We[1,2:36]<-2
-  We[length.w,2:36]<-2
-  # (1/2)*\int(|fxy1-fxy2|)
-  return((1/2)*sum(We*abs(fxy1-fxy2))*(1/4)*(ww[2]-ww[1])*(theta[2]-theta[1]))
+TVD2<-function(x,y,fxy1,fxy2){
+  length.x<-length(x)
+  length.y<-length(y)
+  We<-matrix(4,nrow=length.x,ncol=length.y)
+  We[c(1,1,length.x,length.x),c(1,length.y,1,length.y)]<-1
+  We[2:(length.x-1),1]<-2
+  We[2:(length.x-1),length.y]<-2
+  We[1,2:(length.y-1)]<-2
+  We[length.x,2:(length.y-1)]<-2
+  return((1/2)*sum(We*abs(fxy1-fxy2))*(1/4)*(x[2]-x[1])*(y[2]-y[1]))
 }
 
 ##Clustering Visualization
