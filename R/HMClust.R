@@ -656,12 +656,12 @@ cutk<-function(Clust,kg=NA,alpha=NA)
 {
   #Clust output from HSM
   if(length(na.omit(kg))>0){
-    initial_k<-length(Clust$Diss.Matrix[1,])
+    initial_k<-length(Clust$min.value)+1
     GG<-Clust$Groups[[initial_k-kg]]
     return(GG)
   }
   if(length(na.omit(alpha))>0){
-    initial_k<-length(Clust$Diss.Matrix[1,])
+    initial_k<-length(Clust$min.value)+1
     kg<-initial_k-(which(Clust$min.value>alpha)[1]-1)
     if(length(na.omit(kg))>0){
       GG<-Clust$Groups[[initial_k-kg]]
