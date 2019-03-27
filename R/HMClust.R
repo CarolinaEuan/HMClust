@@ -285,7 +285,7 @@ HCC<-function(X,Clustfreq=NULL,freq=1,dist=1){
   out
 }
 
-HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE){
+HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE,TVD=TRUE){
   n<-length(fx[,1])
   k<-length(fx[1,])
   if(normalize)fxN<-apply(fx,2,normalize,x=x) else fxN<-fx
@@ -293,15 +293,28 @@ HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE){
     library("doParallel")
     cl<-min(k,detectCores()-1)
     registerDoParallel(cl)
+    if(TVD){
     MatDiss<-foreach(i=1:k,.combine = rbind) %dopar%
     {
       Aux.MatDiss<-rep(NA,k)
       for(j in i:k) Aux.MatDiss[j]<-TVD(x,fxN[,i],fxN[,j])
       Aux.MatDiss
     }
+    }else{
+      MatDiss<-foreach(i=1:k,.combine = rbind) %dopar%
+      {
+        Aux.MatDiss<-rep(NA,k)
+        for(j in i:k) Aux.MatDiss[j]<-sqrt(sum((fxN[,i]-fxN[,j])^2))
+        Aux.MatDiss
+      }
+    }
   }else{
     MatDiss<-matrix(NA,k,k)
-    for(i in 1:k)for(j in i:k) MatDiss[i,j]<-TVD(x,fxN[,i],fxN[,j])
+    if(TVD){
+      for(i in 1:k)for(j in i:k) MatDiss[i,j]<-TVD(x,fxN[,i],fxN[,j])
+    }else{
+      for(i in 1:k)for(j in i:k) MatDiss[i,j]<-sqrt(sum((fxN[,i]-fxN[,j])^2))
+    }
   }
   diag(MatDiss)<-0
   MatDiss[lower.tri(MatDiss)]<-t(MatDiss)[lower.tri(MatDiss)]
@@ -317,6 +330,7 @@ HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE){
   groups<-list()
   #Average version
   #Version 2
+  if(TVD){
     for(ite in 1:(k-1)){
       #############
       # Identify the closest clusters and the minimun value
@@ -340,6 +354,31 @@ HMAlgo<-function(x,fx,parallel=FALSE,normalize=TRUE){
         MD_Change<-cbind(MD_Change,c(aux2,Inf))# new MD
       }else{MD_Change<-0}
     }
+  }else{
+    for(ite in 1:(k-1)){
+      #############
+      # Identify the closest clusters and the minimun value
+      min.value[ite]<-min(MD_Change)
+      aux1<-which(MD_Change==min(MD_Change),arr.ind = TRUE)[1,]
+      g<-c(g[-aux1],list(unlist(g[aux1])))# new groups
+      groups[[ite]]<-g ##
+      #############
+      # Spectral Merge
+      fx_Change<-fx_Change[,-aux1]
+      fx_Change<-cbind(fx_Change,rowMeans(fxN[,g[[k-ite]]]))
+      #############
+      #Compute new TVD
+      MD_Change<-MD_Change[-aux1,-aux1]
+      if(ite<(k-1)){
+        aux2<-numeric(k-ite-1)
+        for(i in 1:(k-ite-1)){
+          aux2[i]<-sqrt(sum((fx_Change[,i]-fx_Change[,k-ite])^2))
+        }
+        MD_Change<-rbind(MD_Change,aux2)
+        MD_Change<-cbind(MD_Change,c(aux2,Inf))# new MD
+      }else{MD_Change<-0}
+    }
+  }
   out <- list(MatDiss,min.value, groups)
   names(out) <- c("Diss.Matrix","min.value", "Groups")
   out
