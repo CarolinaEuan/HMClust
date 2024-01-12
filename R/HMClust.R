@@ -491,7 +491,9 @@ TVD2<-function(x,y,fxy1,fxy2){
 
 ##Clustering Visualization
 #Need the ColPal
-VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL){
+VisClust<-function(Clust,Order=NULL,kg=NULL,max.kg=min(200,length(Clust$min.value)),cex.xaxis=1.2,namesX=NULL,nplot=NULL){
+  opar <- par()      # make a copy of current settings
+
   colPal<-c("#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059",
             "#FFDBE5", "#7A4900", "#0000A6", "#63FFAC", "#B79762", "#004D43", "#8FB0FF", "#997D87",
             "#5A0007", "#809693", "#FEFFE6", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80",
@@ -647,7 +649,7 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
     par(mar=c(4,5,0,2))
     image(x=1:length(Clust$Groups),y=1:(length(Clust$Groups)+1),z=t(VisMat[Order,]),
           col=colPal[1:200],xlab="Number of Clusters", axes=F,
-          ylab=" ",cex.lab=1.5, ylim=c(0,(length(Clust$Groups)+4)))
+          ylab=" ",cex.lab=1.5, ylim=c(0,(length(Clust$Groups)+4)),xlim=c(0.5,max.kg+0.5))
     axis(1,at=seq(1,length(Clust$Groups),by = max(floor(length(Clust$Groups)/10),1)), cex.axis=1.2,
          labels = seq(1,length(Clust$Groups),by = max(floor(length(Clust$Groups)/10),1)))
     axis(2,at=seq(1,length(Clust$Groups)+1,1), labels = namesX,cex.axis=cex.xaxis,tick=FALSE,las=2)
@@ -655,7 +657,8 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
     #(max(Clust$Diss.Matrix)-min(Clust$Diss.Matrix))
     plot(1:length(Clust$Groups),rev(Clust$min.value),type = "p",
          axes=FALSE, main = "Minimum dissimilarity",ylim = c(0,max(1,Clust$min.value)),
-         pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],xlab="",ylab=" ")
+         pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],xlab="",ylab=" ",
+         xlim=c(1,max.kg))
     segments(1:(length(Clust$Groups)-1),rev(Clust$min.value[-1]),
              x1=2:length(Clust$Groups), y1=rev(Clust$min.value)[-1],
              col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1])
@@ -668,7 +671,9 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
       par(mar=c(5,5,5,2))
       plot(1:length(Clust$Groups),rev(Clust$min.value),type = "p",
            axes=FALSE, main = "Minimum dissimilarity",ylim = c(0,max(1,Clust$min.value)),
-           pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],xlab="Number of Clusters",ylab=" ")
+           pch=20,col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1],
+           xlim=c(1,max.kg),
+           xlab="Number of Clusters",ylab=" ")
       segments(1:(length(Clust$Groups)-1),rev(Clust$min.value[-1]),
                x1=2:length(Clust$Groups), y1=rev(Clust$min.value)[-1],
                col=colorRampPalette(c("blue", "yellow", "red"))(105)[Max.V*100+1])
@@ -680,13 +685,14 @@ VisClust<-function(Clust,Order=NULL,kg=NULL,cex.xaxis=1.2,namesX=NULL,nplot=NULL
       par(mar=c(4,5,0,2))
       image(x=1:length(Clust$Groups),y=1:(length(Clust$Groups)+1),z=t(VisMat[Order,]),
             col=colPal[1:200],xlab="Number of Clusters", axes=F,
-            ylab=" ",cex.lab=1.5, ylim=c(0,(length(Clust$Groups)+4)))
+            ylab=" ",cex.lab=1.5, ylim=c(0,(length(Clust$Groups)+4)),xlim=c(0.5,max.kg+0.5))
       axis(1,at=seq(1,length(Clust$Groups),by = max(floor(length(Clust$Groups)/10),1)), cex.axis=1.2,
            labels = seq(1,length(Clust$Groups),by = max(floor(length(Clust$Groups)/10),1)))
       axis(2,at=seq(1,length(Clust$Groups)+1,1), labels = namesX,cex.axis=cex.xaxis,tick=FALSE,las=2)
     }
   }
-}
+  par(opar)          # restore original settings
+  }
 
 
 ##Identified Clusters
