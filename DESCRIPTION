@@ -1,9 +1,9 @@
 Package: HMClust
 Type: Package
 Title: HMClust
-Version: 1.2.0
-Date: 2016-07-01
+Version: 1.3.0
+Date: 2024-01-01
 Author: Carolina Euan
-Maintainer: Carolina Euan <caroe@cimat.mx>
+Maintainer: Carolina Euan <c.euancampos@lancaster.ac.uk>
 Description: HMClust is a package developed for time series clustering or functional clustering based on hierarchical merger algorithms.
 License: GPL-2
